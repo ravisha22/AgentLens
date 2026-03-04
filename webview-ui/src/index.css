@@ -1,0 +1,88 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* VS Code theme integration — maps CSS variables from the webview host */
+:root {
+  --zone-green: #22c55e;
+  --zone-yellow: #eab308;
+  --zone-orange: #F59E0B;
+  --zone-red: #ef4444;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--vscode-editor-background);
+  color: var(--vscode-editor-foreground);
+  font-family: var(--vscode-font-family);
+  font-size: var(--vscode-font-size, 13px);
+  line-height: 1.4;
+  overflow-x: hidden;
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Scrollbar styling to match VS Code */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--vscode-scrollbarSlider-background);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--vscode-scrollbarSlider-hoverBackground);
+}
+
+/* Utility classes for VS Code theming */
+.vsc-border {
+  border-color: var(--vscode-panel-border, rgba(128, 128, 128, 0.35));
+}
+
+.vsc-input {
+  background: var(--vscode-input-background);
+  color: var(--vscode-input-foreground);
+  border: 1px solid var(--vscode-input-border, transparent);
+}
+
+.vsc-button {
+  background: var(--vscode-button-background);
+  color: var(--vscode-button-foreground);
+  border: none;
+  padding: 4px 12px;
+  border-radius: 2px;
+  cursor: pointer;
+  font-size: 12px;
+}
+.vsc-button:hover {
+  background: var(--vscode-button-hoverBackground);
+}
+
+.vsc-badge {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 8px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Zone color utilities */
+.zone-green { color: var(--zone-green); }
+.zone-yellow { color: var(--zone-yellow); }
+.zone-orange { color: var(--zone-orange); }
+.zone-red { color: var(--zone-red); }
+
+.zone-bg-green { background-color: var(--zone-green); }
+.zone-bg-yellow { background-color: var(--zone-yellow); }
+.zone-bg-orange { background-color: var(--zone-orange); }
+.zone-bg-red { background-color: var(--zone-red); }

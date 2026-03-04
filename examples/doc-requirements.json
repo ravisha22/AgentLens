@@ -1,0 +1,81 @@
+{
+  "version": "1.0",
+  "requirements": [
+    {
+      "docType": "readme",
+      "displayName": "README",
+      "patterns": ["README.md", "readme.md"],
+      "required": true,
+      "staleDays": 90,
+      "expectedSections": ["Overview", "Getting Started", "Usage", "Configuration"],
+      "minWordCount": 100,
+      "maintainer": "either"
+    },
+    {
+      "docType": "architecture-docs",
+      "displayName": "Architecture",
+      "patterns": ["ARCHITECTURE.md", "docs/architecture/**/*.md", "DESIGN.md"],
+      "required": true,
+      "staleDays": 60,
+      "expectedSections": ["Overview", "Components", "Data Flow", "Dependencies"],
+      "minWordCount": 200,
+      "maintainer": "human"
+    },
+    {
+      "docType": "agent-instructions",
+      "displayName": "Agent Instructions",
+      "patterns": ["CLAUDE.md", ".github/copilot-instructions.md", "AGENTS.md", ".cursorrules"],
+      "required": true,
+      "staleDays": 30,
+      "expectedSections": ["Project Context", "Code Standards", "File Structure"],
+      "minWordCount": 50,
+      "maintainer": "human"
+    },
+    {
+      "docType": "api-docs",
+      "displayName": "API Documentation",
+      "patterns": ["openapi.yaml", "openapi.json", "swagger.yaml", "API.md", "docs/api/**/*.md"],
+      "required": false,
+      "staleDays": 30,
+      "expectedSections": ["Endpoints", "Authentication", "Error Codes"],
+      "minWordCount": 150,
+      "maintainer": "either"
+    },
+    {
+      "docType": "test-cases",
+      "displayName": "Test Documentation",
+      "patterns": ["TESTING.md", "test-plan.md", "tests/README.md"],
+      "required": false,
+      "staleDays": 60,
+      "expectedSections": ["Test Strategy", "Coverage"],
+      "minWordCount": 100,
+      "maintainer": "either"
+    },
+    {
+      "docType": "acceptance-criteria",
+      "displayName": "Acceptance Criteria",
+      "patterns": ["acceptance-criteria.md", "docs/acceptance/**/*.md"],
+      "required": false,
+      "staleDays": 30,
+      "maintainer": "human"
+    },
+    {
+      "docType": "changelog",
+      "displayName": "Changelog",
+      "patterns": ["CHANGELOG.md", "HISTORY.md"],
+      "required": false,
+      "staleDays": 30,
+      "maintainer": "agent"
+    },
+    {
+      "docType": "runbook",
+      "displayName": "Runbook",
+      "patterns": ["RUNBOOK.md", "docs/operations/**/*.md"],
+      "required": false,
+      "staleDays": 90,
+      "expectedSections": ["Deployment", "Rollback", "Monitoring"],
+      "minWordCount": 200,
+      "maintainer": "human"
+    }
+  ]
+}

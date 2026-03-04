@@ -1,0 +1,20 @@
+node_modules/
+dist/
+out/
+*.vsix
+.DS_Store
+Thumbs.db
+webview-ui/node_modules/
+
+# Windows null device artefact (cannot be deleted, must be ignored)
+nul
+
+# Personal project notes / generated deliverables
+*.docx
+*.doc
+
+# Claude Code session temp files
+tmpclaude-*
+
+# Source maps (generated, not needed in repo)
+**/*.js.map

@@ -1,0 +1,117 @@
+{
+  "name": "agentlens",
+  "displayName": "AgentLens — AI Agent Context Intelligence",
+  "description": "Real-time visibility into AI agent context window, model detection, file tracking, and documentation health. No simulated data — only real telemetry.",
+  "version": "4.3.0",
+  "publisher": "agentlens",
+  "license": "MIT",
+  "engines": { "vscode": "^1.85.0" },
+  "categories": ["Other", "Machine Learning"],
+  "keywords": ["ai", "agent", "context", "copilot", "claude", "cursor", "llm", "token"],
+  "activationEvents": ["onStartupFinished"],
+  "main": "./dist/extension.js",
+  "repository": { "type": "git", "url": "https://github.com/agentlens/agentlens" },
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [{
+        "id": "agentlens",
+        "title": "AgentLens",
+        "icon": "media/icon.svg"
+      }]
+    },
+    "views": {
+      "agentlens": [{
+        "type": "webview",
+        "id": "agentlens.dashboard",
+        "name": "Dashboard"
+      }]
+    },
+    "commands": [
+      { "command": "agentlens.refreshContext", "title": "AgentLens: Refresh Context" },
+      { "command": "agentlens.toggleDashboard", "title": "AgentLens: Toggle Dashboard" },
+      { "command": "agentlens.configureCriticalFiles", "title": "AgentLens: Configure Critical Files" },
+      { "command": "agentlens.configureAlwaysPresent", "title": "AgentLens: Configure Always-Present Files" },
+      { "command": "agentlens.createDocManifest", "title": "AgentLens: Create Documentation Manifest" }
+    ],
+    "configuration": {
+      "title": "AgentLens",
+      "properties": {
+        "agentlens.pollIntervalSeconds": {
+          "type": "number",
+          "default": 5,
+          "minimum": 2,
+          "maximum": 60,
+          "description": "How often AgentLens polls for model/agent/context changes (seconds). Min: 2s, Max: 60s."
+        },
+        "agentlens.criticalFiles": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": [],
+          "description": "Glob patterns for files that should be marked as critical."
+        },
+        "agentlens.alwaysPresentFiles": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": [],
+          "description": "Glob patterns for files that should always be present in agent context. These auto-inject when lost after compaction."
+        },
+        "agentlens.alwaysPresentMaxPercent": {
+          "type": "number",
+          "default": 50,
+          "minimum": 10,
+          "maximum": 80,
+          "description": "Maximum percentage of context window that always-present files can consume."
+        },
+        "agentlens.autoInjectOnLoss": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically re-inject always-present files when they fall out of context after compaction."
+        },
+        "agentlens.autoDetectCriticalFiles": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically detect critical files based on file patterns."
+        },
+        "agentlens.alertThresholds": {
+          "type": "object",
+          "default": { "warning": 60, "danger": 60, "critical": 80 },
+          "properties": {
+            "warning": { "type": "number", "default": 60 },
+            "danger": { "type": "number", "default": 60 },
+            "critical": { "type": "number", "default": 80 }
+          },
+          "description": "Context usage thresholds for zone alerts."
+        },
+        "agentlens.showStatusBar": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show AgentLens summary in the VS Code status bar."
+        },
+        "agentlens.visibleFileCount": {
+          "type": "number",
+          "default": 5,
+          "minimum": 3,
+          "maximum": 10,
+          "description": "Number of files visible in the file tracker before collapsing."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "npm run compile:ext && npm run compile:webview",
+    "compile:ext": "node esbuild.mjs",
+    "compile:webview": "cd webview-ui && npx vite build",
+    "watch:ext": "node esbuild.mjs --watch",
+    "watch:webview": "cd webview-ui && npx vite build --watch",
+    "test": "vitest run",
+    "package": "npm run compile && npx @vscode/vsce package --no-dependencies"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "@types/node": "^18.0.0",
+    "typescript": "^5.3.0",
+    "esbuild": "^0.24.0",
+    "vitest": "^2.0.0",
+    "@vscode/vsce": "^2.22.0"
+  }
+}

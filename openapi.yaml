@@ -1,0 +1,560 @@
+# API Documentation
+
+## AgentLens — AI Agent Context Intelligence
+
+**Version:** 3.x
+**Platform:** Visual Studio Code Extension
+**Description:** Real-time visibility into AI agent context window, model detection, file tracking, and documentation health. No simulated data — only real telemetry.
+
+---
+
+## Table of Contents
+
+- [Architecture Overview](#architecture-overview)
+- [Core API](#core-api)
+- [Adapters](#adapters)
+- [Providers](#providers)
+- [Extension Entry Point](#extension-entry-point)
+- [Types](#types)
+- [Events & Telemetry](#events--telemetry)
+- [Scripts & Build](#scripts--build)
+- [Testing](#testing)
+
+---
+
+## Architecture Overview
+
+AgentLens follows a modular architecture with three primary layers:
+
+```
+┌─────────────────────────────────────┐
+│           extension.ts              │  ← VS Code activation & lifecycle
+├─────────────────────────────────────┤
+│           providers/                │  ← TreeView, Webview, & data providers
+├──────────────────┬──────────────────┤
+│     core/        │   adapters/      │  ← Business logic & agent integrations
+├──────────────────┴──────────────────┤
+│           types.ts                  │  ← Shared type definitions
+└─────────────────────────────────────┘
+```
+
+---
+
+## Core API
+
+The `core/` module contains the central business logic for context window tracking, token counting, and telemetry aggregation.
+
+### `ContextWindowTracker`
+
+Monitors and calculates real-time context window utilization.
+
+```typescript
+class ContextWindowTracker {
+  /**
+   * Returns the current context window usage.
+   * @returns ContextWindowState — includes token count, max tokens, and utilization percentage.
+   */
+  getState(): ContextWindowState;
+
+  /**
+   * Updates the context window state based on new telemetry data.
+   * @param telemetry - Raw telemetry payload from the active agent adapter.
+   */
+  update(telemetry: AgentTelemetry): void;
+
+  /**
+   * Subscribes to context window state changes.
+   * @param listener - Callback invoked whenever the state changes.
+   * @returns Disposable — call `.dispose()` to unsubscribe.
+   */
+  onDidChange(listener: (state: ContextWindowState) => void): Disposable;
+}
+```
+
+### `ModelDetector`
+
+Identifies the active AI model being used by the coding agent.
+
+```typescript
+class ModelDetector {
+  /**
+   * Detects the current model from agent process signals and configuration.
+   * @returns ModelInfo or `undefined` if no model is detected.
+   */
+  detect(): ModelInfo | undefined;
+
+  /**
+   * Subscribes to model change events.
+   * @param listener - Callback invoked when the detected model changes.
+   * @returns Disposable
+   */
+  onDidChangeModel(listener: (model: ModelInfo | undefined) => void): Disposable;
+}
+```
+
+### `FileTracker`
+
+Tracks which files the AI agent is reading from or writing to.
+
+```typescript
+class FileTracker {
+  /**
+   * Returns the list of files currently in the agent's context.
+   * @returns TrackedFile[] — array of tracked file entries with metadata.
+   */
+  getTrackedFiles(): TrackedFile[];
+
+  /**
+   * Subscribes to file tracking changes.
+   * @param listener - Callback invoked when tracked files change.
+   * @returns Disposable
+   */
+  onDidChangeFiles(listener: (files: TrackedFile[]) => void): Disposable;
+}
+```
+
+### `DocumentationHealthAnalyzer`
+
+Assesses the health and coverage of documentation in the workspace.
+
+```typescript
+class DocumentationHealthAnalyzer {
+  /**
+   * Analyzes documentation health across the workspace.
+   * @returns DocumentationHealthReport — coverage metrics, staleness indicators, and suggestions.
+   */
+  analyze(): Promise<DocumentationHealthReport>;
+
+  /**
+   * Subscribes to documentation health changes (e.g., after file saves).
+   * @param listener - Callback with updated report.
+   * @returns Disposable
+   */
+  onDidChangeHealth(listener: (report: DocumentationHealthReport) => void): Disposable;
+}
+```
+
+---
+
+## Adapters
+
+The `adapters/` module provides integration layers for different AI coding agents. Each adapter implements a common interface to normalize telemetry from a specific agent.
+
+### `AgentAdapter` Interface
+
+```typescript
+interface AgentAdapter {
+  /** Unique identifier for the adapter (e.g., "copilot", "cursor", "cline"). */
+  readonly id: string;
+
+  /** Human-readable name of the agent. */
+  readonly name: string;
+
+  /**
+   * Checks whether this agent is currently active in the workspace.
+   * @returns `true` if the agent is detected and running.
+   */
+  isActive(): Promise<boolean>;
+
+  /**
+   * Collects raw telemetry from the agent.
+   * @returns AgentTelemetry — real, unprocessed telemetry data.
+   */
+  collectTelemetry(): Promise<AgentTelemetry>;
+
+  /**
+   * Starts listening for real-time telemetry events from the agent.
+   * @param handler - Callback invoked on each telemetry event.
+   * @returns Disposable
+   */
+  startListening(handler: (event: TelemetryEvent) => void): Disposable;
+
+  /**
+   * Cleans up resources held by the adapter.
+   */
+  dispose(): void;
+}
+```
+
+### Supported Adapters
+
+| Adapter | Agent | Status |
+|---------|-------|--------|
+| `CopilotAdapter` | GitHub Copilot | ✅ Supported |
+| `CursorAdapter` | Cursor AI | ✅ Supported |
+| `ClineAdapter` | Cline | ✅ Supported |
+| `GenericAdapter` | Fallback / custom agents | ✅ Supported |
+
+### Example: Using an Adapter
+
+```typescript
+import { CopilotAdapter } from './adapters';
+
+const adapter = new CopilotAdapter();
+
+if (await adapter.isActive()) {
+  const telemetry = await adapter.collectTelemetry();
+  console.log(`Tokens used: ${telemetry.tokensUsed}`);
+  console.log(`Model: ${telemetry.modelId}`);
+}
+```
+
+---
+
+## Providers
+
+The `providers/` module implements VS Code UI components that surface data from the core modules.
+
+### `AgentLensTreeDataProvider`
+
+Provides data for the AgentLens sidebar tree view.
+
+```typescript
+class AgentLensTreeDataProvider implements vscode.TreeDataProvider<AgentLensTreeItem> {
+  /**
+   * Returns the tree item representation for the given element.
+   */
+  getTreeItem(element: AgentLensTreeItem): vscode.TreeItem;
+
+  /**
+   * Returns children of the given element, or root items if no element is provided.
+   */
+  getChildren(element?: AgentLensTreeItem): Promise<AgentLensTreeItem[]>;
+
+  /**
+   * Fires when tree data changes and the view should refresh.
+   */
+  readonly onDidChangeTreeData: vscode.Event<AgentLensTreeItem | undefined>;
+
+  /**
+   * Forces a refresh of the tree view.
+   */
+  refresh(): void;
+}
+```
+
+### `AgentLensWebviewProvider`
+
+Provides the webview panel for rich context window visualization.
+
+```typescript
+class AgentLensWebviewProvider implements vscode.WebviewViewProvider {
+  /**
+   * Called when the webview view is resolved and ready to receive content.
+   * @param webviewView - The webview view instance provided by VS Code.
+   */
+  resolveWebviewView(
+    webviewView: vscode.WebviewView,
+    context: vscode.WebviewViewResolveContext,
+    token: vscode.CancellationToken
+  ): void;
+}
+```
+
+### Webview Message Protocol
+
+Communication between the extension host and the webview uses a structured message protocol.
+
+#### Extension → Webview
+
+```typescript
+/** Sent when context window state updates. */
+interface ContextUpdateMessage {
+  type: 'contextUpdate';
+  payload: {
+    tokensUsed: number;
+    maxTokens: number;
+    utilizationPercent: number;
+    model: ModelInfo | undefined;
+    trackedFiles: TrackedFile[];
+  };
+}
+
+/** Sent when documentation health report is available. */
+interface DocHealthMessage {
+  type: 'docHealth';
+  payload: DocumentationHealthReport;
+}
+```
+
+#### Webview → Extension
+
+```typescript
+/** User requests a manual refresh. */
+interface RefreshRequestMessage {
+  type: 'refreshRequest';
+}
+
+/** User requests to open a tracked file. */
+interface OpenFileMessage {
+  type: 'openFile';
+  payload: {
+    filePath: string;
+  };
+}
+```
+
+---
+
+## Extension Entry Point
+
+### `extension.ts`
+
+The main entry point for the VS Code extension lifecycle.
+
+```typescript
+/**
+ * Called when the extension is activated.
+ * Registers providers, initializes adapters, and starts telemetry collection.
+ * @param context - The VS Code extension context.
+ */
+export function activate(context: vscode.ExtensionContext): void;
+
+/**
+ * Called when the extension is deactivated.
+ * Cleans up all resources, stops telemetry listeners.
+ */
+export function deactivate(): void;
+```
+
+### Registered Commands
+
+| Command | Description |
+|---------|-------------|
+| `agentlens.refresh` | Manually refresh all telemetry data |
+| `agentlens.showContextWindow` | Open the context window visualization panel |
+| `agentlens.detectModel` | Force re-detection of the active AI model |
+| `agentlens.showDocHealth` | Display the documentation health report |
+| `agentlens.clearTracking` | Clear all tracked file data |
+
+### Configuration Settings
+
+Settings are defined under the `agentlens` namespace in `package.json`.
+
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `agentlens.pollingInterval` | `number` | `2000` | Telemetry polling interval in milliseconds |
+| `agentlens.enabled` | `boolean` | `true` | Enable or disable AgentLens monitoring |
+| `agentlens.preferredAdapter` | `string` | `"auto"` | Preferred agent adapter (`"auto"`, `"copilot"`, `"cursor"`, `"cline"`) |
+| `agentlens.docHealth.enabled` | `boolean` | `true` | Enable documentation health analysis |
+| `agentlens.docHealth.includePatterns` | `string[]` | `["**/*.md"]` | Glob patterns for documentation files |
+
+---
+
+## Types
+
+All shared type definitions are exported from `types.ts`.
+
+### `ContextWindowState`
+
+```typescript
+interface ContextWindowState {
+  /** Number of tokens currently consumed. */
+  tokensUsed: number;
+  /** Maximum token capacity of the model's context window. */
+  maxTokens: number;
+  /** Utilization as a percentage (0–100). */
+  utilizationPercent: number;
+  /** Timestamp of the last update. */
+  lastUpdated: Date;
+}
+```
+
+### `ModelInfo`
+
+```typescript
+interface ModelInfo {
+  /** Model identifier (e.g., "gpt-4o", "claude-3.5-sonnet"). */
+  id: string;
+  /** Human-readable model name. */
+  name: string;
+  /** Maximum context window size in tokens. */
+  contextWindowSize: number;
+  /** The provider or vendor (e.g., "openai", "anthropic"). */
+  provider: string;
+}
+```
+
+### `TrackedFile`
+
+```typescript
+interface TrackedFile {
+  /** Absolute file path. */
+  filePath: string;
+  /** Relative path from workspace root. */
+  relativePath: string;
+  /** Estimated token count for this file's content in context. */
+  tokenCount: number;
+  /** How the file entered context. */
+  source: 'user' | 'agent' | 'system';
+  /** Timestamp when the file was added to context. */
+  addedAt: Date;
+}
+```
+
+### `AgentTelemetry`
+
+```typescript
+interface AgentTelemetry {
+  /** Identifier of the agent adapter that produced this telemetry. */
+  adapterId: string;
+  /** Tokens currently in use. */
+  tokensUsed: number;
+  /** Detected model identifier. */
+  modelId: string | undefined;
+  /** Files currently in the agent's context. */
+  files: TrackedFile[];
+  /** Raw metadata from the agent (adapter-specific). */
+  metadata: Record<string, unknown>;
+  /** Timestamp of collection. */
+  timestamp: Date;
+}
+```
+
+### `TelemetryEvent`
+
+```typescript
+interface TelemetryEvent {
+  /** Event type identifier. */
+  type: 'contextChange' | 'modelChange' | 'fileAdded' | 'fileRemoved' | 'error';
+  /** Event payload (shape depends on `type`). */
+  data: unknown;
+  /** Timestamp of the event. */
+  timestamp: Date;
+}
+```
+
+### `DocumentationHealthReport`
+
+```typescript
+interface DocumentationHealthReport {
+  /** Overall health score (0–100). */
+  score: number;
+  /** Total number of documentation files analyzed. */
+  totalFiles: number;
+  /** Number of files considered stale. */
+  staleFiles: number;
+  /** Documentation coverage percentage across the project. */
+  coveragePercent: number;
+  /** Individual file assessments. */
+  files: DocumentationFileHealth[];
+  /** Timestamp of the analysis. */
+  analyzedAt: Date;
+}
+
+interface DocumentationFileHealth {
+  filePath: string;
+  isStale: boolean;
+  lastModified: Date;
+  wordCount: number;
+  issues: string[];
+}
+```
+
+---
+
+## Events & Telemetry
+
+AgentLens uses an event-driven architecture internally. All events flow through a central event bus.
+
+### Event Flow
+
+```
+Agent Process → Adapter → Core Tracker → Provider → Webview/TreeView
+```
+
+### Key Principles
+
+1. **No simulated data** — Every metric originates from real agent telemetry. If an agent is not active, values are reported as unknown rather than estimated.
+2. **Disposable pattern** — All event subscriptions return a `Disposable` object. Call `.dispose()` to unsubscribe and prevent memory leaks.
+3. **Polling + Push** — Adapters use polling as a baseline (`agentlens.pollingInterval`) but switch to push-based updates when the agent supports it.
+
+---
+
+## Scripts & Build
+
+| Script | Command | Description |
+|--------|---------|-------------|
+| `compile` | `npm run compile` | Compile the full project (extension + webview) |
+| `compile:ext` | `npm run compile:ext` | Compile extension host TypeScript only |
+| `compile:webview` | `npm run compile:webview` | Compile webview frontend only |
+| `watch:ext` | `npm run watch:ext` | Watch mode for extension host |
+| `watch:webview` | `npm run watch:webview` | Watch mode for webview frontend |
+| `test` | `npm run test` | Run the test suite |
+| `package` | `npm run package` | Package the extension into a `.vsix` file |
+
+---
+
+## Testing
+
+Tests are located in the `test/` directory and can be executed via:
+
+```bash
+npm run test
+```
+
+### Test Structure
+
+```
+test/
+├── core/              # Unit tests for core modules
+├── adapters/          # Unit tests for agent adapters
+├── providers/         # Tests for VS Code providers
+└── integration/       # End-to-end integration tests
+```
+
+### Writing Tests
+
+```typescript
+import * as assert from 'assert';
+import { ContextWindowTracker } from '../core';
+
+suite('ContextWindowTracker', () => {
+  test('should initialize with zero utilization', () => {
+    const tracker = new ContextWindowTracker();
+    const state = tracker.getState();
+    assert.strictEqual(state.tokensUsed, 0);
+    assert.strictEqual(state.utilizationPercent, 0);
+  });
+
+  test('should update state from telemetry', () => {
+    const tracker = new ContextWindowTracker();
+    tracker.update({
+      adapterId: 'copilot',
+      tokensUsed: 4096,
+      modelId: 'gpt-4o',
+      files: [],
+      metadata: {},
+      timestamp: new Date(),
+    });
+    const state = tracker.getState();
+    assert.strictEqual(state.tokensUsed, 4096);
+  });
+});
+```
+
+---
+
+## Error Handling
+
+All adapter and core methods follow consistent error handling patterns:
+
+```typescript
+interface AgentLensError {
+  code: 'ADAPTER_NOT_FOUND' | 'AGENT_INACTIVE' | 'TELEMETRY_TIMEOUT' | 'PARSE_ERROR';
+  message: string;
+  adapterId?: string;
+  cause?: Error;
+}
+```
+
+Errors are surfaced through:
+- The VS Code **Output Channel** (`AgentLens` channel)
+- `TelemetryEvent` with `type: 'error'`
+- The webview UI as user-facing status messages
+
+---
+
+## License
+
+See the project's `LICENSE` file for terms.
