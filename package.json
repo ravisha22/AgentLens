@@ -17,7 +17,7 @@
       "activitybar": [{
         "id": "agentlens",
         "title": "AgentLens",
-        "icon": "media/icon.svg"
+        "icon": "media/Monochrome.png"
       }]
     },
     "views": {
