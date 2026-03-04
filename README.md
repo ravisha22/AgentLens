@@ -1,4 +1,4 @@
-# AgentLens
+# AgentLens - AI Agent Context Intelligence
 
 > Real-time visibility into what your AI coding agent is doing with its context window.
 
