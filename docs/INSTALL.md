@@ -1,4 +1,6 @@
-# AgentLens — User Guide
+# AgentLens — Installation Guide
+
+**Current version: 4.3.0**
 
 ## What is AgentLens?
 
@@ -10,31 +12,55 @@ It works with **GitHub Copilot**, **Claude Code**, **Cursor**, and **Cline**.
 
 ## Installation
 
-### Step 1: Get the extension file
+### Option A — Install from pre-built VSIX (recommended)
 
-You should have received a file named **`agentlens-3.0.0.vsix`** (approximately 105 KB). This is the extension installer. Save it anywhere on your computer that you can find easily (e.g., your Downloads folder).
+**Step 1: Download the VSIX**
 
-### Step 2: Install in VS Code
+Download `agentlens-4.3.0.vsix` from the [latest GitHub release](https://github.com/ravisha22/AgentLens/releases/tag/v4.3.0).
 
-**Option A — Drag and drop:**
-1. Open VS Code.
-2. Open the **Extensions** panel (click the square icon on the left sidebar, or press `Ctrl+Shift+X`).
-3. Drag the `agentlens-3.0.0.vsix` file from your file explorer and drop it onto the Extensions panel.
+Save it anywhere on your computer (e.g., your Downloads folder).
 
-**Option B — Menu:**
+**Step 2: Install in VS Code**
+
+*Drag and drop:*
 1. Open VS Code.
 2. Open the **Extensions** panel (`Ctrl+Shift+X`).
-3. Click the **three-dot menu** (`...`) at the top-right of the Extensions panel.
-4. Select **Install from VSIX...**
-5. Browse to the `.vsix` file and select it.
+3. Drag the `agentlens-4.3.0.vsix` file onto the Extensions panel.
 
-### Step 3: Confirm installation
+*Menu method:*
+1. Open the **Extensions** panel (`Ctrl+Shift+X`).
+2. Click the **three-dot menu** (`...`) at the top-right.
+3. Select **Install from VSIX...**
+4. Browse to `agentlens-4.3.0.vsix` and select it.
+
+**Step 3: Confirm installation**
 
 After installation you will see a notification: *"Extension 'AgentLens' has been installed."*
 
-You should now see the **AgentLens icon** (an eye icon) in the **Activity Bar** on the left side of VS Code.
+You should now see the **AgentLens icon** in the **Activity Bar** on the left side of VS Code.
 
-If you don't see it, try reloading VS Code: press `Ctrl+Shift+P`, type `Reload Window`, and press Enter.
+If you don't see it, reload VS Code: press `Ctrl+Shift+P`, type `Reload Window`, and press Enter.
+
+---
+
+### Option B — Build from source
+
+**Prerequisites:** Node.js 18+, npm, VS Code
+
+```bash
+git clone https://github.com/ravisha22/AgentLens.git
+cd AgentLens
+npm install
+npm run compile
+```
+
+Press **F5** in VS Code to open an Extension Development Host with AgentLens loaded.
+
+To package your own VSIX:
+```bash
+npm run package
+# Produces agentlens-4.3.0.vsix in the workspace root
+```
 
 ---
 

@@ -10,7 +10,7 @@
   "keywords": ["ai", "agent", "context", "copilot", "claude", "cursor", "llm", "token"],
   "activationEvents": ["onStartupFinished"],
   "main": "./dist/extension.js",
-  "repository": { "type": "git", "url": "https://github.com/agentlens/agentlens" },
+  "repository": { "type": "git", "url": "https://github.com/ravisha22/AgentLens" },
   "contributes": {
     "viewsContainers": {
       "activitybar": [{
