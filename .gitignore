@@ -2,6 +2,7 @@ node_modules/
 dist/
 out/
 *.vsix
+!VSIX/*.vsix
 .DS_Store
 Thumbs.db
 webview-ui/node_modules/

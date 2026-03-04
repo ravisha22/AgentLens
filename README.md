@@ -1,8 +1,14 @@
-# AgentLens v4.3.0
+# AgentLens - AI Agent Context Intelligence
 
 > Real-time visibility into what your AI coding agent is doing with its context window.
 
-AgentLens is a VS Code sidebar extension that surfaces the information normally hidden between you and your AI assistant — context usage, active model, files loaded into context, documentation health, and inferred agent behavior. Every metric comes from real telemetry. No simulated data.
+---
+
+## Overview
+
+AgentLens is a VS Code sidebar extension that surfaces the information normally hidden between you and your AI assistant — context usage, active model, files loaded into context, documentation health, and inferred agent behavior. Every metric comes from real telemetry. **No simulated data.**
+
+Whether you're debugging prompt bloat, tracking which files your agent is referencing, or monitoring token consumption in real time, AgentLens gives you a transparent window into the agent's decision-making environment — without leaving your editor.
 
 ---
 
@@ -10,120 +16,148 @@ AgentLens is a VS Code sidebar extension that surfaces the information normally 
 
 | Card | What You See |
 |------|-------------|
-| **Context Window** | Token count, utilization percentage, and warning thresholds at 80% and 95% |
-| **Active Model** | Detected model name, provider, context limit, and capabilities |
-| **Files in Context** | Which files the agent has loaded, their token cost, and status (in-context, modified, pinned, watched, lost) |
-| **Documentation Health** | Whether your project docs exist, are up to date, and are accessible to the agent |
-| **Agent Mode** | Inferred behavior — Plan mode, Auto-editing, Editing, or Reading |
-
-## Supported Agents
-
-- **Claude Code** (Anthropic)
-- **GitHub Copilot** (via VS Code LM API)
-- **Cline**
-- **Cursor**
+| **Context Window** | Token count, utilization percentage, and capacity for the active model |
+| **Model Detection** | Automatically identifies the AI model currently in use |
+| **File Tracking** | Lists files loaded into the agent's context with size and relevance |
+| **Documentation Health** | Scores the quality and coverage of docs referenced by the agent |
+| **Agent Behavior** | Inferred activity patterns based on real telemetry signals |
 
 ---
 
 ## Getting Started
 
-See **[docs/INSTALL.md](docs/INSTALL.md)** for full installation instructions.
+### Prerequisites
 
-**Quick start:**
+- [Visual Studio Code](https://code.visualstudio.com/) v1.80.0 or later
+- Node.js v18+
 
-1. Clone and install dependencies:
-   ```bash
-   git clone https://github.com/ravisha22/AgentLens.git
-   cd AgentLens
-   npm install
-   ```
+### Installation
 
-2. Build the extension:
-   ```bash
-   npm run compile
-   ```
+#### Option A — Install from VSIX (recommended)
 
-3. Press **F5** in VS Code to launch the Extension Development Host.
+Download the latest pre-built package directly from this repository:
 
-4. Click the **AgentLens** icon in the Activity Bar to open the sidebar.
+1. Go to the [`VSIX/`](./VSIX/) folder in this repo and download `agentlens-4.3.0.vsix`.
+2. Open VS Code → Extensions (`Ctrl+Shift+X`) → `...` → **Install from VSIX...**
+3. Select the downloaded file and reload when prompted.
 
-To install from a `.vsix` package:
+#### Option B — Build from source
+
+```bash
+git clone https://github.com/ravisha22/AgentLens.git
+cd AgentLens
+npm install
 ```
-Extensions view (Ctrl+Shift+X) → ⋯ → Install from VSIX…
+
+### Build
+
+Compile the full project (extension + webview):
+
+```bash
+npm run compile
+```
+
+Or compile individually:
+
+```bash
+npm run compile:ext       # Extension host only
+npm run compile:webview   # Webview UI only
+```
+
+### Run in Development
+
+1. Open the project in VS Code.
+2. Start the watchers in separate terminals:
+
+```bash
+npm run watch:ext
+npm run watch:webview
+```
+
+3. Press **F5** to launch the Extension Development Host.
+4. Open the **AgentLens** panel from the sidebar.
+
+### Package
+
+```bash
+npm run package
+```
+
+This produces a `.vsix` file you can install locally or distribute.
+
+---
+
+## Usage
+
+Once the extension is active, the **AgentLens** sidebar panel appears automatically. Each card updates in real time as you interact with your AI coding assistant.
+
+### Viewing Context Usage
+
+Open the sidebar and check the **Context Window** card. It displays current token utilization against the model's maximum capacity, helping you understand when context is getting crowded and performance may degrade.
+
+### Monitoring Files in Context
+
+The **File Tracking** card shows exactly which files have been loaded into the agent's context. Use this to verify the agent is referencing the right sources — or to catch unnecessary files inflating your token budget.
+
+### Checking Documentation Health
+
+The **Documentation Health** card evaluates referenced documentation for completeness and freshness, giving you actionable signals about whether the agent has enough high-quality context to work effectively.
+
+---
+
+## Project Structure
+
+```
+src/
+├── extension.ts       # Extension entry point
+├── types.ts           # Shared type definitions
+├── core/              # Core telemetry engine and context tracking
+├── adapters/          # Integrations with AI provider APIs
+├── providers/         # VS Code tree/webview data providers
+└── test/              # Unit and integration tests
 ```
 
 ---
 
-## Using the Sidebar
+## Scripts Reference
 
-### Context Window Monitor
-
-Shows real-time token consumption for the active agent session. The gauge turns yellow above 80% and red above 95% — a signal to consider summarizing or removing files from context.
-
-### Files in Context
-
-Lists every file the agent has read or edited, sorted by token cost. Each file shows a status indicator:
-
-- **Green** — currently in context
-- **Blue** — modified this session
-- **Purple** — pinned (always present)
-- **Grey** — watched but not yet loaded
-- **Red** — was in context, now lost
-
-Use the pin (♡/♥) and critical (☆/★) buttons to manage which files the agent prioritizes.
-
-### Documentation Health
-
-Scans your workspace for documentation files defined in the doc manifest. Reports a health score (0–100), flags missing or stale files, and shows a dismissible warning when any doc has not been updated in over 24 hours.
-
-Use **Create Missing Docs** to scaffold absent files, or **Update Docs** to regenerate existing ones from current project state.
-
-### Agent Mode
-
-Displays the agent's inferred current behavior:
-
-- **Plan mode** — confirmed via plan mode entry signal
-- **Auto-editing** — high tool call rate with file edits
-- **Editing** — file edits detected
-- **Reading** — tool calls without file writes
-
----
-
-## Build Reference
-
-| Command | Purpose |
-|---------|---------|
+| Script | Description |
+|--------|-------------|
 | `npm run compile` | Full build (extension + webview) |
-| `npm run compile:ext` | Extension TypeScript only |
-| `npm run compile:webview` | Webview assets only |
-| `npm run watch:ext` | Watch mode for extension source |
-| `npm run watch:webview` | Watch mode for webview source |
-| `npm run test` | Run all tests |
+| `npm run compile:ext` | Compile extension host code |
+| `npm run compile:webview` | Compile webview UI |
+| `npm run watch:ext` | Watch mode for extension code |
+| `npm run watch:webview` | Watch mode for webview UI |
+| `npm test` | Run the test suite |
 | `npm run package` | Package as `.vsix` |
 
 ---
 
-## Documentation
+## Running Tests
 
-| Document | Contents |
-|----------|----------|
-| [docs/INSTALL.md](docs/INSTALL.md) | Installation, prerequisites, build from source |
-| [docs/USER_GUIDE.md](docs/USER_GUIDE.md) | Detailed usage for each sidebar card |
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Codebase structure, adapter pattern, data flow |
-| [docs/TESTING.md](docs/TESTING.md) | Running tests, writing new tests, test conventions |
-| [docs/CHANGELOG.md](docs/CHANGELOG.md) | Version history and release notes |
-| [docs/RUNBOOK.md](docs/RUNBOOK.md) | Diagnostics and troubleshooting |
+```bash
+npm test
+```
+
+Tests live in `src/test/` and validate core telemetry logic, adapter behavior, and provider output.
 
 ---
 
 ## Contributing
 
-Open an issue to discuss proposed changes before submitting a pull request. All contributions must maintain the project's core principle: **real telemetry only** — no simulated or mocked data in production code paths.
+1. Fork the repository.
+2. Create a feature branch: `git checkout -b feat/my-feature`
+3. Commit your changes with clear messages.
+4. Open a pull request against `main`.
 
-See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for guidance on adding new adapters.
+Please ensure `npm test` passes and there are no TypeScript compilation errors before submitting.
 
 ---
 
 ## License
 
-See [LICENSE](./LICENSE) for details.
+MIT
+
+---
+
+> **AgentLens** — because you should see what your agent sees.
